@@ -1,11 +1,11 @@
-const cors = require('cors');
-app.use(cors());
-
 const express = require("express");
 const { fetchBookLinks } = require("./fetchBooks");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const cors = require('cors');
+app.use(cors());
 
 app.get("/search", async (req, res) => {
   const query = req.query.query;
