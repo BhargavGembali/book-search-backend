@@ -1,31 +1,27 @@
-const stringSimilarity = require("string-similarity");
+const express = require("express");
+const { fetchBookLinks } = require("./fetchBooks");
 
-const fetchBookLinks = async (query) => {
-  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(
-    query
-  )}+mediatype:texts&fl[]=title&fl[]=creator&fl[]=year&fl[]=identifier&output=json&rows=20`;
-  const response = await axios.get(url);
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  const books = response.data.response.docs.map((book) => {
-    const title = book.title || "";
-    const author = book.creator || "Unknown";
-    const combinedText = `${title} ${author}`;
-    const similarity = stringSimilarity.compareTwoStrings(
-      query.toLowerCase(),
-      combinedText.toLowerCase()
-    );
+app.get("/search", async (req, res) => {
+  const query = req.query.q;
+  if (!query) {
+    return res.status(400).json({ error: "Missing search query (?q=...)" });
+  }
+  try {
+    const books = await fetchBookLinks(query);
+    if (books.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No free books found for your query." });
+    }
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Error fetching books" });
+  }
+});
 
-    return {
-      title,
-      author,
-      publishYear: book.year,
-      link: `https://archive.org/details/${book.identifier}`,
-      cover: `https://archive.org/services/img/${book.identifier}`,
-      relevance: similarity,
-    };
-  });
-
-  books.sort((a, b) => b.relevance - a.relevance);
-
-  return books.map(({ relevance, ...book }) => book);
-};
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
