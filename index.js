@@ -5,9 +5,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get("/search", async (req, res) => {
-  const query = req.query.q;
+  const query = req.query.query;
   if (!query) {
-    return res.status(400).json({ error: "Missing search query (?q=...)" });
+    return res.status(400).json({ error: "Missing search query (?query=...)" });
   }
   try {
     const books = await fetchBookLinks(query);
